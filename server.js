@@ -11,34 +11,53 @@ const username = process.env.COUCHBASE_USERNAME;
 const password = process.env.COUCHBASE_PASSWORD;
 const bucketName = process.env.COUCHBASE_BUCKET;
 
+let cluster;
 let collection;
 
 async function connectDB() {
-  const cluster = await couchbase.connect(connectionString, {
-    username,
-    password,
-  });
+  try {
+    cluster = await couchbase.connect(connectionString, {
+      username,
+      password,
+    });
 
-  const bucket = cluster.bucket(bucketName);
-  collection = bucket.defaultCollection();
+    const bucket = cluster.bucket(bucketName);
+    collection = bucket.defaultCollection();
+
+    console.log("Connected to Couchbase");
+  } catch (error) {
+    console.error("Database connection failed:", error);
+  }
 }
 
 connectDB();
 
 app.post("/punchin", async (req, res) => {
-  const time = req.body.time;
-  const id = Date.now().toString();
+  try {
+    const time = req.body.time;
+    const id = Date.now().toString();
 
-  await collection.upsert(id, { time });
+    await collection.upsert(id, { time });
 
-  res.send({ message: "Punch saved" });
+    res.send({ message: "Punch saved" });
+  } catch (error) {
+    res.status(500).send(error);
+  }
 });
 
 app.get("/punchins", async (req, res) => {
-  const result = await collection.getAll();
-  res.send(result);
+  try {
+    const query = `SELECT time FROM \`${bucketName}\``;
+    const result = await cluster.query(query);
+
+    res.send(result.rows);
+  } catch (error) {
+    res.status(500).send(error);
+  }
 });
 
-app.listen(10000, () => {
-  console.log("Server running");
+const PORT = process.env.PORT || 10000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
