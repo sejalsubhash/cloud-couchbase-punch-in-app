@@ -1,52 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Punch In Tracker</title>
+<title>Punch In App</title>
 </head>
 
 <body>
 
-<h2>Punch In Application</h2>
+<h1>Punch In</h1>
 
 <button onclick="punch()">Punch In</button>
 
-<h3>Punch Records</h3>
-
-<ul id="records"></ul>
-
 <script>
-
 async function punch(){
+  const time = new Date().toLocaleString()
 
-const time = new Date().toLocaleString()
+  await fetch("/punchin",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({time})
+  })
 
-await fetch('/punchin',{
-method:'POST',
-headers:{'Content-Type':'application/json'},
-body:JSON.stringify({time})
-})
-
-load()
+  alert("Punch saved")
 }
-
-async function load(){
-
-const res = await fetch('/punchins')
-const data = await res.json()
-
-const list = document.getElementById("records")
-list.innerHTML=""
-
-data.forEach(item=>{
-const li=document.createElement("li")
-li.innerText=item.time
-list.appendChild(li)
-})
-
-}
-
-load()
-
 </script>
 
 </body>
